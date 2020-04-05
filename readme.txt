@@ -1,5 +1,6 @@
-This is an example C++ library for Arduino 0004+, based on one created by 
-Nicholas Zambetti for Wiring 0006+
+Arduino library to schedule RTC alarms at specific times or repeating intervals
+
+Alarm Interupt Scheduler for DS3132/31 RTC
 
 Installation
 --------------------------------------------------------------------------------
@@ -7,33 +8,39 @@ Installation
 To install this library, just place this entire folder as a subfolder in your
 Arduino/lib/targets/libraries folder.
 
-When installed, this library should look like:
-
-Arduino/lib/targets/libraries/Test              (this library's folder)
-Arduino/lib/targets/libraries/Test/Test.cpp     (the library implementation file)
-Arduino/lib/targets/libraries/Test/Test.h       (the library description file)
-Arduino/lib/targets/libraries/Test/keywords.txt (the syntax coloring file)
-Arduino/lib/targets/libraries/Test/examples     (the examples in the "open" menu)
-Arduino/lib/targets/libraries/Test/readme.txt   (this file)
-
-Building
+Example Use
 --------------------------------------------------------------------------------
 
-After this library is installed, you just have to start the Arduino application.
-You may see a few warning messages as it's built.
+#include <AlarmSchedule.h>
 
-To use this library in a sketch, go to the Sketch | Import Library menu and
-select Test.  This will add a corresponding line to the top of your sketch:
-#include <Test.h>
+AlarmScheduleRTC3232 als;
 
-To stop using this library, delete that line from your sketch.
+/*
+ * Alarm Schedule Constants:
+ *
+ALM1_EVERY_SECOND = 0x0F,      // once a second
+ALM1_MATCH_SECONDS = 0x0E,     // when seconds match
+ALM1_MATCH_MINUTES = 0x0C,     // match minutes *and* seconds
+ALM1_MATCH_HOURS = 0x08,       // match hours *and* minutes, seconds
+ALM1_MATCH_DATE = 0x00,        // match date *and* hours, minutes, seconds
+ALM1_MATCH_DAY = 0x10,         // match day *and* hours, minutes, seconds
+ALM2_EVERY_MINUTE = 0x8E,
+ALM2_MATCH_MINUTES = 0x8C,     // match minutes
+ALM2_MATCH_HOURS = 0x88,       // match hours *and* minutes
+ALM2_MATCH_DATE = 0x80,        // match date *and* hours, minutes
+ALM2_MATCH_DAY = 0x90,         // match day *and* hours, minutes
+*/
+ALARM_TYPES_t alarmType = ALM1_MATCH_SECONDS;
 
-Geeky information:
-After a successful build of this library, a new file named "Test.o" will appear
-in "Arduino/lib/targets/libraries/Test". This file is the built/compiled library
-code.
+// Set Alarm at specific times
+uint8_t alarmMatchSec = 0;  // 00-59
+uint8_t alarmMatchMin = 0;  // 00-59
+uint8_t alarmMatchHour = 0; // 00-23
+uint8_t alarmMatchDay = 0;  // 1-7
 
-If you choose to modify the code for this library (i.e. "Test.cpp" or "Test.h"),
-then you must first 'unbuild' this library by deleting the "Test.o" file. The
-new "Test.o" with your code will appear after the next press of "verify"
+// Or set repeat Alarm (ALM1_MATCH_SECONDS | ALM1_MATCH_MINUTES) in (secs|mins)
+uint8_t alarmInterval = 20;
 
+als.setAlarm( alarmType, alarmMatchSec, alarmMatchMin, alarmMatchHour, alarmMatchDay, alarmInterval);
+
+als.setRepeatAlarm(alarmType, alarmInterval);
