@@ -8,7 +8,6 @@
 * Version: 1.01
 * Date: 28-02-2020
 *
-* This library is licensed under Creative Commons Attribution-ShareAlike 3.0
 *
 */
 
@@ -30,6 +29,13 @@ void AlarmSchedule::setAlarm(ALARM_TYPES_t alarmType, uint8_t alarmMatchSec, uin
 {
     uint8_t i, nextIntervalSec, nextIntervalMin, nextIntervalHour, nextIntervalDay = 0;
 
+    _alarmType = alarmType;
+    _alarmMatchSec = alarmMatchSec;
+    _alarmMatchMin = alarmMatchMin;
+    _alarmMatchHour = alarmMatchHour;
+    _alarmMatchDay = alarmMatchDay;
+    _alarmInterval = alarmInterval;
+
     switch(alarmType)
     {
       case ALM1_EVERY_SECOND :
@@ -37,46 +43,41 @@ void AlarmSchedule::setAlarm(ALARM_TYPES_t alarmType, uint8_t alarmMatchSec, uin
         break;
 
       case ALM1_MATCH_SECONDS :
-        if (alarmMatchSec >= 1)
+        if (_alarmInterval == 0)
         {
-          nextIntervalSec = alarmMatchSec;
+          nextIntervalSec = _alarmMatchSec;
         } else {
-          //Serial.println("Secs: ");
-          //Serial.println(second());
-          i = second() + alarmInterval;
+          i = second() + _alarmInterval;
           nextIntervalSec = (i < 60) ? (i) : 0 + (i - 60) ;
-          //Serial.println("NextInterval: ");
-          //Serial.println(nextIntervalSec);
-
         }
         break;
 
       case ALM1_MATCH_MINUTES :
-        if (alarmMatchMin >= 1)
+        if (_alarmInterval == 0)
         {
-          nextIntervalSec = alarmMatchSec;
-          nextIntervalMin = alarmMatchMin;
+          nextIntervalSec = _alarmMatchSec;
+          nextIntervalMin = _alarmMatchMin;
         } else {
-          i = (minute() * 60) + alarmInterval;
+          i = (minute() * 60) + _alarmInterval;
           nextIntervalMin = ((i / 60) < 60) ? (i) : 0 + (i - 60) ;
         }
 
       case ALM1_MATCH_HOURS :
-        if (alarmMatchHour >= 1)
+        if (_alarmMatchHour >= 1)
         {
-          nextIntervalSec = alarmMatchSec;
-          nextIntervalMin = alarmMatchMin;
-          nextIntervalHour = alarmMatchHour;
+          nextIntervalSec = _alarmMatchSec;
+          nextIntervalMin = _alarmMatchMin;
+          nextIntervalHour = _alarmMatchHour;
         }
         break;
 
       case ALM1_MATCH_DAY :
-        if (alarmMatchDay >= 1)
+        if (_alarmMatchDay >= 1)
         {
-          nextIntervalSec = alarmMatchSec;
-          nextIntervalMin = alarmMatchMin;
-          nextIntervalHour = alarmMatchHour;
-          nextIntervalDay = alarmMatchDay;
+          nextIntervalSec = _alarmMatchSec;
+          nextIntervalMin = _alarmMatchMin;
+          nextIntervalHour = _alarmMatchHour;
+          nextIntervalDay = _alarmMatchDay;
         }
         break;
 
@@ -85,7 +86,7 @@ void AlarmSchedule::setAlarm(ALARM_TYPES_t alarmType, uint8_t alarmMatchSec, uin
         break;
     }
 
-    setAlarmInterupt(alarmType , nextIntervalSec, nextIntervalMin, nextIntervalHour, nextIntervalDay);
+    setAlarmInterupt(_alarmType , nextIntervalSec, nextIntervalMin, nextIntervalHour, nextIntervalDay);
 
 }
 
@@ -96,7 +97,6 @@ void AlarmSchedule::setAlarm(ALARM_TYPES_t alarmType, uint8_t alarmMatchSec, uin
  */
 void AlarmSchedule::setRepeatAlarm(ALARM_TYPES_t alarmType, uint8_t alarmInterval)
 {
-    Serial.println("setRepeatAlarm()");
 
     uint8_t min, sec, hour, day, i = 0;
 
@@ -131,22 +131,25 @@ void AlarmScheduleRTC3232::setAlarmInterupt(ALARM_TYPES_t alarmType, byte second
   rtc.alarm( ALARM_1 );
   rtc.alarmInterrupt(ALARM_2, false);
   rtc.alarmInterrupt(ALARM_1, true);            // Turns on Alarm_1
-  rtc.setAlarm(alarmType , seconds, minutes, hours,daydate);
+  rtc.setAlarm(alarmType, seconds, minutes, hours, daydate);
 }
 
 /**
-* attachInterupt() does not appear to work within class method (static | non static)
-* Interupt fires repeatedly, perhaps Interupt lock? gets corrupted when method returns
-* Tried with typedef void (*isrFunc_t)();  declared in global scope and void (*isrFunc)()
+* attachInterupt() - @toso
 */
 void AlarmScheduleRTC3232::attachISRInterrupt(uint8_t interruptNum, isrFunc_t isrFunc, int mode)
 {
   Serial.println("attachISRInterrupt()");
   Serial.println(interruptNum);
   Serial.println(mode);
+  Serial.println(digitalPinToInterrupt(interruptNum));
 
   //pinMode( interruptNum, INPUT_PULLUP );
+  // attempt to call function in global scope
   //attachInterrupt(digitalPinToInterrupt(interruptNum), (*isrFunc), mode);
+
+  // define IRQ handler as class method
+  //attachInterrupt(digitalPinToInterrupt(interruptNum), irqHandler0, mode);
 }
 
 uint8_t AlarmScheduleRTC3232::minute()
@@ -159,4 +162,9 @@ uint8_t AlarmScheduleRTC3232::second()
 {
   DateTime dt = rtc.get();
   return dt.second();
+}
+
+void AlarmScheduleRTC3232::irqHandler0()
+{
+  Serial.println("irqHandler0");
 }
